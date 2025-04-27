@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Link to the CSS file -->
+    <link rel="stylesheet" href="assets/styles/style.css">
+
+    <!-- Meta tags for better character encoding and responsiveness -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Page title -->
+    <title>EASY BREATHE- Pollution Awareness App</title>
+</head>
+
+<body>
+
+    <h1>EASY BREATHE</h1>
+
+
+    <!-- Firebase Setup -->
+    <script type="module">
+        // Import Firebase modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+        import { getDatabase, ref, set, push } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCz8U6l7V5A1V_4-NoxJmShs8lA5upLJXg",
+            authDomain: "pollution-app-demo.firebaseapp.com",
+            databaseURL: "https://pollution-app-demo-default-rtdb.firebaseio.com",
+            projectId: "pollution-app-demo",
+            storageBucket: "pollution-app-demo.appspot.com",
+            messagingSenderId: "304278362627",
+            appId: "1:304278362627:web:fd2bd89ef19081d8e7a8f2"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        // Export for use in other scripts
+        window.db = database;
+        window.dbRef = ref;
+        window.dbPush = push;
+        window.dbSet = set;
+    </script>
+
+    <!-- API Fetch Scripts -->
+    <script>
+      
+
+        async function fetchNews() {
+            const apiKey = "pub_834142f2eb3a4fbc36d9392091feecfe63af8&q"; 
+
+            try {
+                const response = await fetch(`https://newsdata.io/api/1/news?apikey=${pub_834142f2eb3a4fbc36d9392091feecfe63af8&q}&q=pollution&language=en`);
+                const newsData = await response.json();
+                const articles = newsData.results.slice(0, 5); // Display first 5 articles
+                let output = '<ul>';
+                articles.forEach(article => {
+                    output += `<li><a href="${article.link}" target="_blank">${article.title}</a></li>`;
+                });
+                output += '</ul>';
+                document.getElementById('newsDisplay').innerHTML = output;
+            } catch (error) {
+                console.error('Error fetching news:', error);
+                alert('Failed to fetch news.');
+            }
+        }
+    </script>
+
+    <nav style="position: sticky; top: 0; background-color: #fff; padding: 10px; z-index: 999; text-align: center;">
+        
+        <button onclick="scrollToSection('dailyEcoChallenge')">Daily Eco Challenge</button>
+        <button onclick="scrollToSection('ecoImpact')">Your Impact</button>
+        <button onclick="scrollToSection('pollutionPoints')">Pollution Points</button>
+        <button onclick="scrollToSection('leaderboard')">Leaderboard</button>
+        <button onclick="scrollToSection('report')">Report Issue</button>
+        <button onclick="scrollToSection('news')">News</button>
+        <button onclick="scrollToSection('awareness')">Awareness</button>
+    </nav>
+
+<!-- Replace your entire Daily Eco Challenge section with this: -->
+<section id="dailyEcoChallenge">
+    <div style="background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom: 20px;">
+      <h2>🌱 Daily Eco Challenge</h2>
+      <p id="dailyTask">Click "New Task" to get started!</p>
+      <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;">
+        <button onclick="generateDailyTask()" style="background: #4CAF50; color: white; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: bold;">🔄 New Task</button>
+        <button onclick="completeDailyTask()" style="background: #2196F3; color: white; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: bold;">✅ Mark as Completed</button>
+      </div>
+      <p id="completedMsg" style="margin-top: 10px; color: green; font-weight: bold;"></p>
+    </div>
+  </section>
+  
+  <!-- Replace your Pollution Points section with this: -->
+  <section id="pollutionPoints">
+    <div style="background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom: 20px;">
+      <h2>🌍 Pollution Points</h2>
+      <p>Your current pollution points: <span id="pollutionPointsValue">0</span></p>
+    </div>
+  </section>
+  
+  <!-- Replace your Eco Impact section with this: -->
+  <section id="ecoImpact">
+    <div style="background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom: 20px;">
+      <h2>🌿 Your Eco Impact</h2>
+      <div id="ecoImpactDisplay">
+        Complete tasks to see your positive impact!
+      </div>
+    </div>
+  </section>
+  
+  <script>
+    // Global variables for task system
+    let totalPoints = 0;
+    let completedTasks = 0;
+    
+    const ecoTasks = [
+      { text: "Walk instead of driving for short trips", points: 15, impact: "Reduced CO2 emissions by 1kg" },
+      { text: "Use a reusable water bottle today", points: 10, impact: "Saved 3 plastic bottles from landfills" },
+      { text: "Turn off lights when leaving a room", points: 5, impact: "Conserved energy for 8 hours" },
+      { text: "Plant a tree or indoor plant", points: 25, impact: "Will filter 10kg of air pollutants annually" },
+      { text: "Have a meat-free meal today", points: 20, impact: "Saved 3000 liters of water" }
+    ];
+  
+    const impactMessages = [
+      { threshold: 10, message: "You've saved 5kg of CO2 emissions!" },
+      { threshold: 30, message: "Prevented 15 plastic bags from entering oceans!" },
+      { threshold: 50, message: "Conserved enough water to fill 2 bathtubs!" },
+      { threshold: 100, message: "Hero! You've offset a full day of car emissions!" }
+    ];
+  
+    // Generate random daily task
+    function generateDailyTask() {
+      const randomTask = ecoTasks[Math.floor(Math.random() * ecoTasks.length)];
+      const taskElement = document.getElementById("dailyTask");
+      taskElement.textContent = randomTask.text;
+      taskElement.dataset.points = randomTask.points;
+      taskElement.dataset.impact = randomTask.impact;
+      document.getElementById("completedMsg").textContent = "";
+    }
+  
+    // Complete task and add points
+    function completeDailyTask() {
+      const taskElement = document.getElementById("dailyTask");
+      const points = parseInt(taskElement.dataset.points || 0);
+      const impact = taskElement.dataset.impact || "Helped the environment";
+      
+      if (!points) {
+        alert("Please generate a task first!");
+        return;
+      }
+  
+      // Update points
+      totalPoints += points;
+      completedTasks++;
+      document.getElementById("pollutionPointsValue").textContent = totalPoints;
+  
+      // Show completion message
+      document.getElementById("completedMsg").innerHTML = `
+        ✅ Task completed! +${points} points<br>
+        <small>${impact}</small>
+      `;
+  
+      // Update eco impact
+      updateEcoImpact();
+  
+      // Generate new task after 2 seconds
+      setTimeout(generateDailyTask, 2000);
+    }
+  
+    // Update impact display
+    function updateEcoImpact() {
+      const impactDisplay = document.getElementById("ecoImpactDisplay");
+      let message = `You've completed ${completedTasks} tasks and earned ${totalPoints} points!`;
+      
+      // Add special achievements
+      impactMessages.forEach(item => {
+        if (totalPoints >= item.threshold) {
+          message += `<br><br>🌟 ${item.message}`;
+        }
+      });
+      
+      impactDisplay.innerHTML = message;
+    }
+  </script>
+
+    <!-- Leaderboard Section -->
+    <section id="leaderboard">
+        <div style="background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom: 20px;">
+            <h2>🏆 Leaderboard</h2>
+            <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;">
+                <input type="text" id="username" placeholder="Enter your name" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
+                <button onclick="saveScore()" style="background: #4CAF50; color: white; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: bold;">Save Score</button>
+            </div>
+            <ul id="leaderboardList" style="list-style: none; padding: 0; margin-top: 15px;"></ul>
+        </div>
+    </section>
+
+    <!-- Report Pollution Issue -->
+    <section id="report">
+        <div style="background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom: 20px;">
+            <h2>🚨 Report Pollution Issue</h2>
+            <textarea id="pollutionReport" rows="4" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;" placeholder="Describe the pollution issue here..."></textarea>
+            <div style="margin-top: 10px;">
+                <button onclick="submitReport()" style="background: #FF5722; color: white; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: bold;">Submit</button>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- News Section -->
+                <section id="news">
+                    <div style="background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom: 20px;">
+                    <h2>📰 Latest Pollution News</h2>
+                    <div id="news-container">Fetching latest news...</div>
+                  
+                    <script>
+                      async function fetchPollutionNews() {
+                        const newsContainer = document.getElementById('news-container');
+                        newsContainer.innerHTML = ''; // Clear "Fetching..." message
+                  
+                        try {
+                          const response = await fetch(
+                            'https://newsapi.org/v2/everything?q=pollution%20india&sortBy=publishedAt&apiKey=a4cb9ac687254f7db11cf198cc6fea83'
+                          );
+                          const data = await response.json();
+                          const articles = data.articles;
+                  
+                          if (articles && articles.length > 0) {
+                            const newsList = document.createElement('ul');
+                            articles.slice(0, 10).forEach(article => {
+                              const listItem = document.createElement('li');
+                              const link = document.createElement('a');
+                              link.href = article.url;
+                              link.textContent = article.title;
+                              link.target = '_blank';
+                              listItem.appendChild(link);
+                              newsList.appendChild(listItem);
+                            });
+                            newsContainer.appendChild(newsList);
+                          } else {
+                            newsContainer.textContent = 'Could not retrieve the latest news.';
+                          }
+                        } catch (error) {
+                          console.error('Error fetching news:', error);
+                          newsContainer.textContent = 'An error occurred while fetching the news.';
+                        }
+                      }
+                  
+                      document.addEventListener('DOMContentLoaded', fetchPollutionNews);
+                    </script>
+                  </section>
+        
+        
+        </div>
+
+    </section>
+
+    <!-- Awareness Section -->
+    <section id="awareness">
+        <div style="background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom: 20px;">
+        <h2>📚 Pollution Awareness</h2>
+        <p>Learn more about pollution and how to reduce it!</p>
+    </section>
+
+    <script>
+        // Navigation function to scroll to sections
+        function scrollToSection(sectionId) {
+            document.getElementById(sectionId).scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Generate daily eco challenge
+        function generateTask() {
+            const tasks = [
+                "Take a 15-minute walk outside today.",
+                "Use public transport instead of your personal car.",
+                "Plant a tree or some flowers.",
+                "Reduce water usage by turning off taps when not in use.",
+                "Avoid using plastic bags for shopping."
+            ];
+            const randomTask = tasks[Math.floor(Math.random() * tasks.length)];
+            document.getElementById("dailyTask").innerText = randomTask;
+        }
+
+        // Mark the task as completed
+        function completeTask() {
+            const completedMsg = "Good job! You've completed the task.";
+            document.getElementById("completedMsg").innerText = completedMsg;
+        }
+
+        // Add points based on user action
+        function addPoints(points) {
+            const currentPoints = parseInt(document.getElementById('pollutionPointsValue').innerText);
+            const newPoints = currentPoints + points;
+            document.getElementById('pollutionPointsValue').innerText = newPoints;
+        }
+
+        // Save leaderboard score
+        function saveScore() {
+            const username = document.getElementById('username').value;
+            if (username.trim() !== "") {
+                const score = document.getElementById('pollutionPointsValue').innerText;
+                const leaderboardRef = dbRef(db, 'leaderboard');
+                const newScoreRef = dbPush(leaderboardRef);
+                dbSet(newScoreRef, {
+                    username: username,
+                    score: score
+                }).then(() => {
+                    alert('Score saved successfully!');
+                    displayLeaderboard();
+                }).catch((error) => {
+                    console.error('Error saving score:', error);
+                });
+            }
+        }
+
+        // Display leaderboard
+        function displayLeaderboard() {
+            const leaderboardRef = dbRef(db, 'leaderboard');
+            const leaderboardList = document.getElementById('leaderboardList');
+            leaderboardList.innerHTML = ''; // Clear existing list
+            dbRef(db, 'leaderboard').on('value', (snapshot) => {
+                snapshot.forEach((childSnapshot) => {
+                    const scoreData = childSnapshot.val();
+                    const li = document.createElement('li');
+                    li.innerText = `${scoreData.username}: ${scoreData.score} points`;
+                    leaderboardList.appendChild(li);
+                });
+            });
+        }
+
+        // Report pollution issue
+        function submitReport() {
+            const report = document.getElementById('pollutionReport').value;
+            if (report.trim() !== "") {
+                alert("Thank you for reporting the pollution issue.");
+            } else {
+                alert("Please describe the pollution issue before submitting.");
+            }
+        }
+    </script>
+    <div class="main-wrapper">
+        <header>
+          <h1>Save The Planet</h1>
+        </header>
+      
+        <section class="content-box">
+          <h2>Our Mission</h2>
+          <p>We aim to reduce pollution and create a greener future for everyone. Let's make Earth a better place!</p>
+          <button>Join Us</button>
+        </section>
+      
+        <section class="content-box">
+          <h2>Pollution Map</h2>
+          <div class="map-section">
+            <iframe src="https://waqi.info/" frameborder="0" allowfullscreen></iframe>
+          </div>
+        </section>
+      
+        <footer>
+          Made with by [Amarjeet singh]
+        </footer>
+      </div>
+      
+</body>
+</html>
